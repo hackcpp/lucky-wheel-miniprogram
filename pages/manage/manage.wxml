@@ -1,0 +1,28 @@
+<view class="page">
+  <view class="tabs">
+    <view class="tab {{cur==='eat'?'active':''}}" data-cat="eat" bindtap="switchCat">吃什么</view>
+    <view class="tab {{cur==='play'?'active':''}}" data-cat="play" bindtap="switchCat">玩什么</view>
+    <view class="tab {{cur==='custom'?'active':''}}" data-cat="custom" bindtap="switchCat">自定义</view>
+  </view>
+
+  <scroll-view class="list" scroll-y>
+    <view class="item" wx:for="{{items}}" wx:key="index">
+      <view class="name">{{item.text}}</view>
+      <view class="ctrl">
+        <view class="step" bindtap="dec" data-i="{{index}}">−</view>
+        <view class="w">×{{item.weight}}</view>
+        <view class="step" bindtap="inc" data-i="{{index}}">+</view>
+        <view class="del" bindtap="del" data-i="{{index}}">删除</view>
+      </view>
+    </view>
+    <view class="empty" wx:if="{{items.length === 0}}">暂无选项，在下方添加吧</view>
+  </scroll-view>
+
+  <view class="add-bar">
+    <input class="add-input" placeholder="输入选项名称" value="{{newName}}" bindinput="onNameInput" />
+    <picker class="weight-picker" range="{{weights}}" value="{{newWeightIdx}}" bindchange="onWeightChange">
+      <view class="weight-display">权重 ×{{weights[newWeightIdx]}}</view>
+    </picker>
+    <view class="add-btn" bindtap="add">添加</view>
+  </view>
+</view>

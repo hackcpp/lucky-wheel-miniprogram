@@ -1,0 +1,104 @@
+.page {
+  min-height: 100vh;
+  padding: 40rpx 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.tabs {
+  display: flex;
+  gap: 16rpx;
+  margin-bottom: 10rpx;
+}
+
+.tab {
+  padding: 12rpx 36rpx;
+  border-radius: 40rpx;
+  border: 1px solid #07c160;
+  color: #07c160;
+  font-size: 28rpx;
+  background: transparent;
+}
+
+.tab.active {
+  background: #07c160;
+  color: #fff;
+}
+
+.manage-entry {
+  margin-top: 56rpx;
+  width: 420rpx;
+  text-align: center;
+  color: #07c160;
+  font-size: 30rpx;
+  padding: 20rpx;
+  border: 1px solid #07c160;
+  border-radius: 40rpx;
+}
+
+.manage-entry.disabled {
+  opacity: 0.4;
+  pointer-events: none;
+}
+
+.mask {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.42);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+
+.mask.hidden {
+  display: none;
+}
+
+.card {
+  width: 560rpx;
+  background: #fff;
+  border-radius: 40rpx;
+  padding: 60rpx 48rpx;
+  text-align: center;
+  animation: pop 0.25s ease;
+}
+
+@keyframes pop {
+  from { transform: scale(0.9); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+.result {
+  font-size: 56rpx;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 44rpx;
+}
+
+.btns {
+  display: flex;
+  gap: 20rpx;
+}
+
+.btn {
+  flex: 1;
+  padding: 22rpx 0;
+  border-radius: 40rpx;
+  font-size: 30rpx;
+  text-align: center;
+}
+
+.btn-primary {
+  background: #07c160;
+  color: #fff;
+}
+
+.btn-ghost {
+  background: #f2f3f5;
+  color: #333;
+}

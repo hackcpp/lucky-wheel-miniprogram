@@ -1,0 +1,6 @@
+{
+  "usingComponents": {
+    "wheel": "/components/wheel/wheel"
+  },
+  "navigationBarTitleText": "幸运转盘"
+}

@@ -1,0 +1,5 @@
+<view class="wheel-wrap">
+  <view class="pointer"></view>
+  <canvas type="2d" id="wheel" class="wheel-canvas"></canvas>
+  <view class="spin-btn {{spinning ? 'disabled' : ''}}" bindtap="onSpinTap">开始</view>
+</view>

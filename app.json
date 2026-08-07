@@ -1,0 +1,16 @@
+{
+  "pages": [
+    "pages/index/index",
+    "pages/manage/manage"
+  ],
+  "window": {
+    "navigationBarBackgroundColor": "#f0faf4",
+    "navigationBarTitleText": "幸运转盘",
+    "navigationBarTextStyle": "black",
+    "backgroundColor": "#f0faf4",
+    "backgroundTextStyle": "dark"
+  },
+  "style": "v2",
+  "lazyCodeLoading": "requiredComponents",
+  "sitemapLocation": "sitemap.json"
+}

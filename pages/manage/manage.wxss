@@ -88,40 +88,53 @@
   right: 0;
   bottom: 0;
   display: flex;
+  align-items: center;
   gap: 16rpx;
-  padding: 16rpx 24rpx;
+  padding: 16rpx 24rpx calc(16rpx + env(safe-area-inset-bottom));
   background: rgba(255, 255, 255, 0.92);
   border-top: 1px solid #e4eee9;
-  align-items: center;
+  box-sizing: border-box;
 }
 
 .add-input {
   flex: 1;
+  min-width: 0;
+  height: 76rpx;
+  line-height: 76rpx;
   border: 1px solid #ddd;
   border-radius: 40rpx;
-  padding: 18rpx 24rpx;
+  padding: 0 24rpx;
   font-size: 28rpx;
   background: #fff;
+  box-sizing: border-box;
 }
 
 .weight-picker {
   flex-shrink: 0;
+  display: flex;
+  align-items: center;
 }
 
 .weight-display {
+  height: 76rpx;
+  line-height: 76rpx;
   border: 1px solid #ddd;
   border-radius: 40rpx;
-  padding: 18rpx 20rpx;
+  padding: 0 20rpx;
   font-size: 26rpx;
   color: #07c160;
   background: #fff;
+  box-sizing: border-box;
 }
 
 .add-btn {
   flex-shrink: 0;
+  height: 76rpx;
+  line-height: 76rpx;
   background: #07c160;
   color: #fff;
   border-radius: 40rpx;
-  padding: 18rpx 36rpx;
+  padding: 0 36rpx;
   font-size: 28rpx;
+  box-sizing: border-box;
 }

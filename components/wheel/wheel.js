@@ -41,14 +41,28 @@ Component({
       });
     },
 
+    // HSL → HEX：微信小程序真机 canvas 2d 对 hsl() 支持不全，会回退默认色，
+    // 因此扇区配色一律用 hex，保证真机/模拟器/浏览器三端视觉一致。
+    hslToHex(h, s, l) {
+      s = Number(s) / 100;
+      l = Number(l) / 100;
+      const a = s * Math.min(l, 1 - l);
+      const k = (n) => (n + h / 30) % 12;
+      const f = (n) => {
+        const c = l - a * Math.max(-1, Math.min(k(n) - 3, 9 - k(n), 1));
+        return Math.round(255 * c).toString(16).padStart(2, '0');
+      };
+      return `#${f(0)}${f(8)}${f(4)}`;
+    },
+
     // 单一绿 family 的明度梯度：相邻差恒定、首尾差最大 → 奇数扇区也不撞色
     wheelSectorColors(n) {
       const H = 150, S = 46, Lmax = 92, Lmin = 60;
-      if (n <= 1) return [`hsl(${H}, ${S}%, ${Lmax}%)`];
+      if (n <= 1) return [this.hslToHex(H, S, Lmax)];
       const out = [];
       for (let i = 0; i < n; i++) {
         const L = Lmax - (Lmax - Lmin) * i / (n - 1);
-        out.push(`hsl(${H}, ${S}%, ${L.toFixed(1)}%)`);
+        out.push(this.hslToHex(H, S, L.toFixed(1)));
       }
       return out;
     },

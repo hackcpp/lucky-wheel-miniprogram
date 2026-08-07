@@ -166,14 +166,26 @@ let rotation = -Math.PI/2;
 // 转盘扇区配色（单色系明度梯度）——遵循 Anti-Slop 配色纪律：
 // 锁定单一绿 family 为全页唯一强调色；低饱和（<80%）；同 hue 的明度阶梯
 // 相邻明度差恒定可见、首尾明度差最大 → 扇区可区分、奇数也不撞色
+// 注意：微信小程序真机 canvas 2d 对 hsl() 支持不全，会解析错乱，
+// 因此这里统一用 hex，保证原型与小程序、浏览器与真机视觉完全一致。
+function hslToHex(h, s, l) {
+  s = Number(s) / 100; l = Number(l) / 100;
+  const a = s * Math.min(l, 1 - l);
+  const k = (n) => (n + h / 30) % 12;
+  const f = (n) => {
+    const c = l - a * Math.max(-1, Math.min(k(n) - 3, 9 - k(n), 1));
+    return Math.round(255 * c).toString(16).padStart(2, '0');
+  };
+  return `#${f(0)}${f(8)}${f(4)}`;
+}
 function wheelSectorColors(n){
   const H = 150, S = 46;          // 清新绿系，低饱和
   const Lmax = 92, Lmin = 60;     // 明度从浅到深
-  if(n <= 1) return [`hsl(${H}, ${S}%, ${Lmax}%)`];
+  if(n <= 1) return [hslToHex(H, S, Lmax)];
   const out = [];
   for(let i=0;i<n;i++){
     const L = Lmax - (Lmax - Lmin) * i / (n - 1);
-    out.push(`hsl(${H}, ${S}%, ${L.toFixed(1)}%)`);
+    out.push(hslToHex(H, S, L.toFixed(1)));
   }
   return out;
 }

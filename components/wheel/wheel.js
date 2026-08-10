@@ -6,7 +6,12 @@ Component({
       observer() {
         // 旋转中或画布未就绪时不重绘（旋转中不会触发切分类）
         if (this.data.spinning || !this.ctx) return;
-        this.drawWheel(this.data.rotation);
+        // 切选项（分类切换 / 管理页改完返回）时转盘回到 12 点初始角，
+        // 统一用 -π/2 重绘，避免沿用上次旋转遗留角度造成一帧错位（M3）。
+        if (this.data.rotation !== -Math.PI / 2) {
+          this.setData({ rotation: -Math.PI / 2 });
+        }
+        this.drawWheel(-Math.PI / 2);
       }
     }
   },
@@ -16,7 +21,25 @@ Component({
   },
   lifetimes: {
     ready() {
+      this._shareImage = '';
+      this._pauseStart = 0;
+      this._pausedAccum = 0;
       this.initCanvas();
+    }
+  },
+  // 组件随页面前后台的生命周期：处理旋转中切后台再返回的续播（M4）
+  pageLifetimes: {
+    show() {
+      if (this.data.spinning && this._pauseStart) {
+        this._pausedAccum += Date.now() - this._pauseStart;
+        this._pauseStart = 0;
+        if (this.canvas) this.canvas.requestAnimationFrame(() => this._step());
+      }
+    },
+    hide() {
+      if (this.data.spinning && !this._pauseStart) {
+        this._pauseStart = Date.now();
+      }
     }
   },
   methods: {
@@ -29,8 +52,17 @@ Component({
         }
         const canvas = res[0].node;
         const ctx = canvas.getContext('2d');
-        const info = wx.getWindowInfo ? wx.getWindowInfo() : wx.getSystemInfoSync();
-        const dpr = info.pixelRatio || 2;
+        // L1：优先 getWindowInfo（基础库 ≥2.20.1），仅极旧基础库回退已废弃的 getSystemInfoSync；
+        // 建议提审基础库 ≥2.20.1 以彻底避免废弃 API 告警。
+        let dpr = 2;
+        try {
+          const info = (typeof wx.getWindowInfo === 'function')
+            ? wx.getWindowInfo()
+            : wx.getSystemInfoSync();
+          dpr = info.pixelRatio || 2;
+        } catch (e) {
+          dpr = 2;
+        }
         canvas.width = res[0].width * dpr;
         canvas.height = res[0].height * dpr;
         this.canvas = canvas;
@@ -115,15 +147,25 @@ Component({
       ctx.strokeStyle = '#ffffff';
       ctx.stroke();
       ctx.restore();
+
+      // L7：静止状态重绘后导出当前转盘图，供朋友圈分享卡片使用；
+      // 旋转中每帧重绘时 this.data.spinning 为真，跳过以避免无谓开销。
+      if (!this.data.spinning) this.exportImage();
     },
 
     // 按权重随机选中：权重高者更易中，但扇区大小不变
+    // 防御性规范化：即使 items 里权重为脏数据（非数字/越界），也保证抽样不崩、概率合理
     weightedPick(items) {
+      const w = items.map((it) => {
+        const n = Number(it.weight);
+        if (!isFinite(n) || n <= 0) return 1;
+        return Math.min(5, Math.max(1, Math.round(n)));
+      });
       let total = 0;
-      for (const it of items) total += (it.weight || 1);
+      for (const x of w) total += x;
       let r = Math.random() * total;
       for (let i = 0; i < items.length; i++) {
-        r -= (items[i].weight || 1);
+        r -= w[i];
         if (r < 0) return i;
       }
       return items.length - 1;
@@ -150,27 +192,58 @@ Component({
       // 目标：rotation + center ≡ -π/2 (mod 2π)，并叠加 5 圈
       const rel = (((-Math.PI / 2 - center) % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
       const startRot = this.data.rotation;
-      let desired = startRot - (startRot % (2 * Math.PI)) + rel + 5 * 2 * Math.PI;
-      if (desired <= startRot) desired += 2 * Math.PI;
+      const desired = startRot - (startRot % (2 * Math.PI)) + rel + 5 * 2 * Math.PI;
+      // 注：原 `if (desired <= startRot) desired += 2*Math.PI;` 为死代码（desired 恒大于 startRot），已删除（L6）。
       const delta = desired - startRot;
       const duration = 3500;
-      const canvas = this.canvas;
-      const startTs = Date.now();
+      this._startRot = startRot;
+      this._delta = delta;
+      this._duration = duration;
+      this._target = target;
+      this._targetItems = items;
+      this._startTs = Date.now();
+      this._pausedAccum = 0;
+      this._pauseStart = 0;
+      this.canvas.requestAnimationFrame(() => this._step());
+    },
 
-      const step = () => {
-        const t = Math.min((Date.now() - startTs) / duration, 1);
-        const eased = 1 - Math.pow(1 - t, 3); // ease-out cubic
-        const rot = startRot + delta * eased;
-        this.drawWheel(rot);
-        if (t < 1) {
-          canvas.requestAnimationFrame(step);
-        } else {
-          this.setData({ spinning: false, rotation: rot });
-          this.triggerEvent('spinstat', { spinning: false });
-          this.triggerEvent('result', { index: target, value: items[target] });
-        }
-      };
-      canvas.requestAnimationFrame(step);
+    // 旋转帧：基于"累计可见时间"推进，切后台暂停期间不计入时长（M4 配套）
+    _step() {
+      if (!this.canvas) return;
+      const elapsed = Date.now() - this._startTs - this._pausedAccum;
+      const t = Math.min(elapsed / this._duration, 1);
+      const eased = 1 - Math.pow(1 - t, 3); // ease-out cubic
+      const rot = this._startRot + this._delta * eased;
+      this.drawWheel(rot);
+      if (t < 1) {
+        if (this._pauseStart) return; // 暂停中：停止自调度，待 pageLifetimes.show 续播
+        this.canvas.requestAnimationFrame(() => this._step());
+      } else {
+        this.setData({ spinning: false, rotation: rot });
+        this.triggerEvent('spinstat', { spinning: false });
+        this.triggerEvent('result', { index: this._target, value: this._targetItems[this._target] });
+      }
+    },
+
+    // 导出当前转盘为临时图片，供朋友圈分享卡片使用（L7）
+    exportImage() {
+      if (!this.canvas) return;
+      wx.canvasToTempFilePath({
+        canvas: this.canvas,
+        x: 0,
+        y: 0,
+        width: this.canvas.width,
+        height: this.canvas.height,
+        destWidth: this.canvas.width,
+        destHeight: this.canvas.height,
+        success: (res) => { this._shareImage = res.tempFilePath; },
+        fail: () => {}
+      }, this);
+    },
+
+    // 供父页面分享时读取已导出的转盘图（L7）
+    getShareImage() {
+      return this._shareImage || '';
     },
 
     // 切分类时由父页面调用：重置旋转角并重绘

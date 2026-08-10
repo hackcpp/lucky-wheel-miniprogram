@@ -5,7 +5,7 @@
     "include": []
   },
   "setting": {
-    "urlCheck": false,
+    "urlCheck": true,
     "es6": true,
     "enhance": true,
     "postcss": true,
@@ -33,7 +33,7 @@
   },
   "compileType": "miniprogram",
   "libVersion": "3.17.1",
-  "appid": "wx10cf7567cde87816",
+  "appid": "wx1310aa70dcd3e3fe",
   "projectname": "lucky-wheel",
   "condition": {},
   "simulatorPluginLibVersion": {},

@@ -27,10 +27,11 @@ Page({
       app.globalData.activeCat && ['eat', 'play', 'custom'].includes(app.globalData.activeCat)
         ? app.globalData.activeCat
         : this.data.cur;
-    this.setData({ cur: cat, showResultCard: false });
-    this.refreshItems(cat);
-    const wheel = this.selectComponent('#wheel');
-    if (wheel) wheel.resetRotation();
+      this.setData({ cur: cat, showResultCard: false });
+      this.refreshItems(cat);
+      const wheel = this.selectComponent('#wheel');
+      // 旋转中（如切后台再回来）不重置转盘，避免打断续播动画（M4 配套修复）
+      if (wheel && !this.data.spinning) wheel.resetRotation();
   },
 
   refreshItems(cur) {
@@ -86,9 +87,12 @@ Page({
   },
 
   onShareTimeline() {
+    const wheel = this.selectComponent('#wheel');
+    const img = (wheel && typeof wheel.getShareImage === 'function') ? wheel.getShareImage() : '';
     return {
       title: '帮我决定今天吃什么玩什么！',
-      query: 'cat=' + this.data.cur
+      query: 'cat=' + this.data.cur,
+      imageUrl: img
     };
   }
 });

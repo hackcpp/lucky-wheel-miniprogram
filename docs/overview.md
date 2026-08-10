@@ -5,10 +5,10 @@
 
 ## 如何运行
 
-1. 打开**微信开发者工具** → 「导入项目」→ 目录选 `D:\Work\mini`。
-2. AppID 选「测试号」，或直接填你自己的（配置文件里当前是游客模式 `touristappid`，可先预览）。
+1. 打开**微信开发者工具** → 「导入项目」→ 目录选 `D:\Work\lucky-wheel`。
+2. AppID 已填真实小程序 AppID（`wx1310aa70dcd3e3fe`）；若要换号，到 mp.weixin.qq.com 注册个人主体后在 `project.config.json` 替换。
 3. 编译后即可在模拟器看到：首页转盘 + 分类 Tab（吃什么/玩什么/自定义）+ 管理入口。
-4. **真机预览 / 上传前**，把 `project.config.json` 的 `"appid": "touristappid"` 换成自己的 AppID（到 mp.weixin.qq.com 注册个人主体获取）。
+4. **真机预览 / 上传前**：AppID 已就位，直接编译即可；如需换号，到 mp.weixin.qq.com 注册个人主体后替换 `project.config.json` 里的 `appid`。
 
 ## 已实现（对照 Plan 里程碑 ①→⑤）
 
@@ -25,7 +25,7 @@
 - **指针固定 12 点 = `-π/2`**；结果用预先按权重随机选中的索引，动画停的位置与结果严格一致。
 - **扇区等分**；权重仅影响概率（`weightedPick`），不体现于盘面大小。
 - **旋转中锁定**：禁用「开始」按钮 + 禁用「管理选项」入口，防止切换状态错乱。
-- **切分类重置旋转角**；首页 ↔ 管理页 `cur` 双向同步（`manage.onUnload` 回写父页）。
+- **切分类重置旋转角**；首页 ↔ 管理页 `cur` 通过 `app.globalData.activeCat` 实时同步（切换分类即写入，不再等 `onUnload` 回写，避免首页 `onShow` 先于 `onUnload` 执行造成错位）。
 - **本地存储版本兼容**：以 `DEFAULTS` 为基准补齐，旧数据缺某分类也不崩。
 
 ## 发布前自查（个人主体）

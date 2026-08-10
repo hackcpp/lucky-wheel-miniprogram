@@ -51,14 +51,16 @@ Page({
   inc(e) {
     const i = e.currentTarget.dataset.i;
     const items = this.data.items.slice();
-    items[i].weight = Math.min(5, items[i].weight + 1);
+    const cur = Number(items[i].weight) || 1; // 防御：权重可能因脏数据变成字符串
+    items[i].weight = Math.min(5, Math.max(1, cur + 1));
     this.commit(items);
   },
 
   dec(e) {
     const i = e.currentTarget.dataset.i;
     const items = this.data.items.slice();
-    items[i].weight = Math.max(1, items[i].weight - 1);
+    const cur = Number(items[i].weight) || 1;
+    items[i].weight = Math.min(5, Math.max(1, cur - 1));
     this.commit(items);
   },
 
@@ -75,11 +77,21 @@ Page({
       wx.showToast({ title: '请输入名称', icon: 'none' });
       return;
     }
-    const w = this.data.weights[this.data.newWeightIdx];
+    const w = Math.min(5, Math.max(1, Number(this.data.weights[this.data.newWeightIdx]) || 1));
     const items = this.data.items.slice();
     const exist = items.find(x => x.text === name);
-    if (exist) exist.weight = w; // 同名则更新权重
-    else items.push({ text: name, weight: w });
+    if (exist) {
+      exist.weight = w; // 同名则更新权重
+      this.setData({ newName: '' });
+      this.commit(items);
+      wx.showToast({ title: '已更新权重', icon: 'none' }); // L5：同名更新给出反馈
+      return;
+    }
+    if (items.length >= 16) {
+      wx.showToast({ title: '最多 16 个选项', icon: 'none' });
+      return;
+    }
+    items.push({ text: name, weight: w });
     this.setData({ newName: '' });
     this.commit(items);
   },
@@ -91,6 +103,14 @@ Page({
     const storage = require('../../utils/storage.js');
     storage.save(cats);
     this.setData({ items: items.slice() });
+  },
+
+  // 管理页也支持转发：分享卡片打开回首页并带当前分类（L4）
+  onShareAppMessage() {
+    return {
+      title: '帮我决定今天吃什么玩什么！',
+      path: '/pages/index/index?cat=' + this.data.cur
+    };
   },
 
   noop() {}

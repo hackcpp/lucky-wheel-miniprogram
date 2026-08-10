@@ -10,21 +10,32 @@ Page({
   },
 
   onLoad(options) {
-    // 分享进入时带 cat 参数；同步设置 this.data.cur 避免 onShow 读取滞后
+    // 分享进入时带 cat 参数；与 globalData.activeCat 保持同步
+    let cat = 'eat';
     if (options && options.cat && ['eat', 'play', 'custom'].includes(options.cat)) {
-      this.data.cur = options.cat;
+      cat = options.cat;
     }
-    this.refreshItems();
+    app.globalData.activeCat = cat;
+    this.setData({ cur: cat });
+    this.refreshItems(cat);
   },
 
   onShow() {
-    // 从管理页返回时重新读取（管理页可能已修改数据）
-    this.refreshItems();
+    // 从管理页返回时：以 activeCat 为准（管理页切换分类时已实时同步），
+    // 清掉残留结果卡并把转盘角度归位，避免 cur/items/角度错位。
+    const cat =
+      app.globalData.activeCat && ['eat', 'play', 'custom'].includes(app.globalData.activeCat)
+        ? app.globalData.activeCat
+        : this.data.cur;
+    this.setData({ cur: cat, showResultCard: false });
+    this.refreshItems(cat);
+    const wheel = this.selectComponent('#wheel');
+    if (wheel) wheel.resetRotation();
   },
 
-  refreshItems() {
+  refreshItems(cur) {
+    cur = cur || this.data.cur;
     const cats = app.globalData.categories;
-    const cur = this.data.cur;
     const cat = cats[cur];
     const items = (cat && cat.items) ? cat.items : [];
     this.setData({ items: items.slice() });
@@ -37,6 +48,7 @@ Page({
     const wheel = this.selectComponent('#wheel');
     if (wheel) wheel.resetRotation();
     this.setData({ cur: cat, showResultCard: false });
+    app.globalData.activeCat = cat; // 同步，保证进管理页/返回时分类一致
     this.refreshItems();
   },
 

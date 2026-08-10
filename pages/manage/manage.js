@@ -10,18 +10,19 @@ Page({
   },
 
   onLoad(options) {
+    let cat = 'eat';
     if (options && options.cat && ['eat', 'play', 'custom'].includes(options.cat)) {
-      this.data.cur = options.cat;
+      cat = options.cat;
     }
+    // 必须用 setData 更新 cur，否则 Tab 高亮不会刷新（直接赋值 this.data.cur 不触发视图更新）
+    this.setData({ cur: cat });
+    // 实时同步激活分类给首页；不再等 onUnload 回写，避免首页 onShow 先于
+    // onUnload 执行导致 cur 与 items 错位。
+    app.globalData.activeCat = cat;
     this.refresh();
   },
 
-  // 返回首页前：把当前分类同步回父页，保持首页 Tab 高亮与转盘一致
-  onUnload() {
-    const pages = getCurrentPages();
-    const prev = pages[pages.length - 2];
-    if (prev) prev.setData({ cur: this.data.cur });
-  },
+  // 返回首页前无需回写 cur：分类已在加载/切换时实时同步到 globalData.activeCat
 
   refresh() {
     const cats = app.globalData.categories;
@@ -35,6 +36,7 @@ Page({
     const cat = e.currentTarget.dataset.cat;
     if (cat === this.data.cur) return;
     this.setData({ cur: cat });
+    app.globalData.activeCat = cat; // 实时同步，返回首页时保持一致
     this.refresh();
   },
 
